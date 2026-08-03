@@ -9,23 +9,28 @@
 set -e
 
 # ---------------------------------------------------------------------------
-# PORT
+# PORT — deliberately NOT overridden.
 #
-# Railway injects PORT into every service and that injection OVERRIDES the image's
-# own ENV, so an image that honours $PORT (this one does — src/main.ts falls back to
-# 2785 only when PORT is unset) listens on Railway's 8080 while the template's domain
-# points somewhere else. Measured on a live deployment 2026-08-03: the app logged
-# "OpenWA is running on: http://localhost:8080" against a domain whose target port was
-# 2785, i.e. a clean 502 at the edge with a container that looks perfectly healthy from
-# the inside.
+# Railway injects PORT into every service and the injection overrides the image's own
+# ENV. OpenWA honours $PORT (src/main.ts falls back to 2785 only when PORT is unset),
+# so the app follows Railway, and the template's domain must target the same value.
 #
-# The entrypoint runs AFTER the injection, so it is the only place that can win. Pin
-# the listen port to the same value the published template's domain targets. A deployer
-# who wants a different port sets OPENWA_PORT and repoints the domain to match.
+# An earlier revision pinned PORT here instead, on the theory that the entrypoint runs
+# after the injection and therefore wins. It does win — and that is exactly what breaks
+# the deploy. Measured 2026-08-03: with the app pinned to 2785 and the domain targeting
+# 2785, the public URL served fine but Railway's own HTTP healthcheck failed for the
+# full five-minute window ("1/1 replicas never became healthy"), because the healthcheck
+# dials the INJECTED port, not the domain's target port. The app was up and answering
+# on 2785 the whole time.
+#
+# So: leave PORT alone. OPENWA_PORT is the escape hatch for anyone running this image
+# outside Railway who wants a fixed port.
 # ---------------------------------------------------------------------------
-PORT="${OPENWA_PORT:-2785}"
-export PORT
-echo "[railway] listening on PORT=${PORT}"
+if [ -n "${OPENWA_PORT}" ]; then
+    PORT="${OPENWA_PORT}"
+    export PORT
+fi
+echo "[railway] listening on PORT=${PORT:-2785}"
 
 # ---------------------------------------------------------------------------
 # MAX_CONCURRENT_SESSIONS
