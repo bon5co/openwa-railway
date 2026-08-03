@@ -9,6 +9,25 @@
 set -e
 
 # ---------------------------------------------------------------------------
+# PORT
+#
+# Railway injects PORT into every service and that injection OVERRIDES the image's
+# own ENV, so an image that honours $PORT (this one does — src/main.ts falls back to
+# 2785 only when PORT is unset) listens on Railway's 8080 while the template's domain
+# points somewhere else. Measured on a live deployment 2026-08-03: the app logged
+# "OpenWA is running on: http://localhost:8080" against a domain whose target port was
+# 2785, i.e. a clean 502 at the edge with a container that looks perfectly healthy from
+# the inside.
+#
+# The entrypoint runs AFTER the injection, so it is the only place that can win. Pin
+# the listen port to the same value the published template's domain targets. A deployer
+# who wants a different port sets OPENWA_PORT and repoints the domain to match.
+# ---------------------------------------------------------------------------
+PORT="${OPENWA_PORT:-2785}"
+export PORT
+echo "[railway] listening on PORT=${PORT}"
+
+# ---------------------------------------------------------------------------
 # MAX_CONCURRENT_SESSIONS
 #
 # Upstream defaults it to 0, which means UNLIMITED, and its own comment notes that

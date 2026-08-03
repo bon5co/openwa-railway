@@ -57,7 +57,17 @@ forwarded hop is a per-PoP address rather than a per-client one. The three windo
 also raised to values sized for a whole deployment. They are set under the names the application
 actually reads — `RATE_LIMIT_{SHORT,MEDIUM,LONG}_{TTL,LIMIT}`.
 
-### 4. The version is pinned
+### 4. The listen port is pinned in the entrypoint, not in ENV
+
+Railway injects `PORT` into every service and that injection **overrides the image's own
+`ENV`**. OpenWA honours `$PORT`, so it obediently listens on Railway's `8080` while the
+template's domain targets `2785` — measured on a live deployment on 2026-08-03, which logged
+`OpenWA is running on: http://localhost:8080` and returned a clean 502 at the edge while looking
+perfectly healthy from the inside. The entrypoint runs after the injection, so it is the only
+place that can win; it pins the port to the value the published template's domain targets.
+`OPENWA_PORT` overrides it.
+
+### 5. The version is pinned
 
 Upstream's `MAIN_DATABASE_SYNCHRONIZE` defaults to `true`, i.e. TypeORM reshapes the schema from
 the entity definitions on boot. Riding `:latest` on an app that auto-migrates in that direction
