@@ -1,5 +1,9 @@
 # openwa-railway
 
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/openwa-v013-or-whatsapp-api-sessions-sur?referralCode=Z1xivh&utm_medium=integration&utm_source=template&utm_campaign=generic)
+
+**Deploy on Railway:** [OpenWA template](https://railway.com/deploy/openwa-v013-or-whatsapp-api-sessions-sur?referralCode=Z1xivh&utm_medium=integration&utm_source=template&utm_campaign=generic)
+
 Wrapper image behind the Railway template for [OpenWA](https://github.com/rmyndharis/OpenWA) —
 a self-hosted WhatsApp API gateway (REST + webhooks + dashboard, MIT).
 
